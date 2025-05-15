@@ -1,4 +1,8 @@
-document.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('load', () => {
+    if (typeof GameEngine === 'undefined') {
+        console.error('GameEngine not loaded');
+        return;
+    }
     const game = new GameEngine('game-canvas');
     const startScreen = document.getElementById('start-screen');
     const gameOverScreen = document.getElementById('game-over');
