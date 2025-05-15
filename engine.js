@@ -251,17 +251,23 @@ window.GameEngine = class GameEngine {
             boss: {
                 health: 300,        // 降低生命值
                 speed: 1,          // 降低速度
-                size: 50,
+                size: 40,
                 color: '#f0f',
-                points: 1000,
-                pattern: 'complex',
-                isBoss: true
+                points: 500,
+                pattern: 'boss'
             }
         };
-        return enemies[type] || enemies.default;
+        
+        const enemyType = enemies[type] || enemies.default;
+        return {
+            x: Math.random() * this.canvas.width,
+            y: -50,
+            ...enemyType,
+            type: type,
+            rotation: 0,
+            lastShot: 0
+        };
     }
-
-    // ...
 
     gameLoop() {
         if (!this.isRunning) return;
