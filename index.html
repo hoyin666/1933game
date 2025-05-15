@@ -1,10 +1,89 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Cloudflare Pass test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>1933 Fighter Plane Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
-<body>
-    Cloudflare Pass test
+<body class="bg-gray-900 text-white overflow-hidden h-screen w-screen m-0 p-0">
+    <div id="game-container" class="relative h-full w-full overflow-hidden">
+        <!-- Game canvas -->
+        <canvas id="game-canvas" class="absolute inset-0 z-10"></canvas>
+        
+        <!-- Start screen -->
+        <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black bg-opacity-80">
+            <h1 class="text-4xl md:text-6xl font-geist-mono mb-6 text-center">1933 FIGHTER</h1>
+            <p class="text-xl md:text-2xl mb-10 text-center max-w-md px-4">Take to the skies in your vintage aircraft and battle enemy planes!</p>
+            <button id="start-button" class="px-8 py-4 bg-red-600 hover:bg-red-700 text-white text-lg md:text-xl rounded-lg transition-all transform hover:scale-105">
+                START MISSION
+            </button>
+            
+            <div class="mt-12 px-6 max-w-md">
+                <h2 class="text-xl mb-4 text-center">CONTROLS</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="text-right">W or ↑</div>
+                    <div>Accelerate</div>
+                    <div class="text-right">S or ↓</div>
+                    <div>Decelerate</div>
+                    <div class="text-right">A or ←</div>
+                    <div>Turn Left</div>
+                    <div class="text-right">D or →</div>
+                    <div>Turn Right</div>
+                    <div class="text-right">SPACE</div>
+                    <div>Fire</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- HUD -->
+        <div id="hud" class="absolute top-0 left-0 right-0 p-4 flex justify-between items-start z-20 pointer-events-none hidden">
+            <div>
+                <div class="mb-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                    </svg>
+                    <span id="score">0</span>
+                </div>
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 8V12L15 15" />
+                        <circle cx="12" cy="12" r="9" />
+                    </svg>
+                    <span id="wave">Wave 1</span>
+                </div>
+            </div>
+            <div>
+                <div id="health-container" class="h-4 w-40 bg-gray-700 rounded-full overflow-hidden">
+                    <div id="health-bar" class="h-full bg-red-600 transition-all duration-300" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game over screen -->
+        <div id="game-over" class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black bg-opacity-80 hidden">
+            <h2 class="text-4xl md:text-6xl font-geist-mono mb-6 text-red-600">MISSION FAILED</h2>
+            <p class="text-xl mb-4">Final Score: <span id="final-score">0</span></p>
+            <p class="text-xl mb-10">Wave Reached: <span id="final-wave">0</span></p>
+            <button id="restart-button" class="px-8 py-4 bg-red-600 hover:bg-red-700 text-white text-lg md:text-xl rounded-lg transition-all transform hover:scale-105">
+                TRY AGAIN
+            </button>
+        </div>
+    </div>
+    
+    <footer class="absolute bottom-2 right-4 text-gray-500 text-sm">
+        Built with <a href="https://flowith.net" target="_blank" class="hover:text-white transition-colors">Flowith Oracle</a>.
+    </footer>
+    
+    <script src="engine.js"></script>
+    <script src="game.js"></script>
+    <script>
+        window.addEventListener("wheel", (e)=> {
+            const isPinching = e.ctrlKey
+            if(isPinching) e.preventDefault()
+        }, { passive: false })
+    </script>
 </body>
 </html>
