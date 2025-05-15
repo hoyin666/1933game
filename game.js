@@ -22,18 +22,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // 遊戲更新邏輯
     game.update = function() {
         // 玩家移動
-        if (this.keys['w'] || this.keys['arrowup'] || this.touchControls.up) {
+        if (this.keys['w'] || this.touchControls.up) {
             this.player.x += Math.cos(this.player.rotation) * this.player.speed * this.player.speedBoost;
             this.player.y += Math.sin(this.player.rotation) * this.player.speed * this.player.speedBoost;
         }
-        if (this.keys['s'] || this.keys['arrowdown'] || this.touchControls.down) {
+        if (this.keys['s'] || this.touchControls.down) {
             this.player.x -= Math.cos(this.player.rotation) * this.player.speed * 0.5;
             this.player.y -= Math.sin(this.player.rotation) * this.player.speed * 0.5;
         }
-        if (this.keys['a'] || this.keys['arrowleft'] || this.touchControls.left) {
+        if (this.keys['a'] || this.touchControls.left) {
             this.player.rotation -= 0.05;
         }
-        if (this.keys['d'] || this.keys['arrowright'] || this.touchControls.right) {
+        if (this.keys['d'] || this.touchControls.right) {
             this.player.rotation += 0.05;
         }
 

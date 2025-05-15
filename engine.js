@@ -6,7 +6,14 @@ class GameEngine {
         this.particles = [];
         this.powerups = [];
         this.player = null;
-        this.keys = {};
+        // 初始化所有可能的按鍵狀態
+        this.keys = {
+            'w': false,
+            's': false,
+            'a': false,
+            'd': false,
+            ' ': false
+        };
         this.touchControls = {
             left: false,
             right: false,
