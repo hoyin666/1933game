@@ -3,6 +3,8 @@ class GameEngine {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.entities = [];
+        this.particles = [];
+        this.powerups = [];
         this.player = null;
         this.keys = {};
         this.touchControls = {
@@ -10,30 +12,98 @@ class GameEngine {
             right: false,
             up: false,
             down: false,
-            fire: false
+            fire: false,
+            switchWeapon: false
         };
+
+        // Game state
         this.gameTime = 0;
         this.lastTime = 0;
         this.deltaTime = 0;
         this.isRunning = false;
+        
+        // Scoring system
         this.score = 0;
+        this.combo = 0;
+        this.lastKillTime = 0;
+        this.comboTimeout = 2000; // ms to maintain combo
+        this.highScores = JSON.parse(localStorage.getItem('highScores') || '[]');
+        
+        // Wave system
         this.wave = 1;
         this.difficulty = 1;
-        this.spawnRate = 3000; // ms between enemy spawns
+        this.spawnRate = 3000;
         this.lastSpawnTime = 0;
         this.enemiesPerWave = 5;
         this.enemiesSpawned = 0;
         this.enemiesDefeated = 0;
-        this.waveDelay = 5000; // ms between waves
+        this.waveDelay = 5000;
         this.waveStartTime = 0;
         this.betweenWaves = false;
+        
+        // Visual effects
         this.cloudSpawnRate = 5000;
         this.lastCloudTime = 0;
+        this.backgrounds = [];
+        this.backgroundSpeed = 0.5;
+        
+        // Achievement system
+        this.achievements = {
+            firstKill: { earned: false, name: 'First Blood', description: 'Get your first kill' },
+            combo10: { earned: false, name: 'Combo Master', description: 'Achieve a 10x combo' },
+            wave5: { earned: false, name: 'Survivor', description: 'Reach wave 5' },
+            score1000: { earned: false, name: 'Point Hoarder', description: 'Score 1000 points' },
+            killBoss: { earned: false, name: 'Boss Slayer', description: 'Defeat a boss' }
+        };
         
         this.setupEventListeners();
         this.resizeCanvas();
     }
     
+    createWeapon(type) {
+        const weapons = {
+            default: {
+                name: 'Machine Gun',
+                damage: 10,
+                fireRate: 200,
+                spread: 0.1,
+                projectileSpeed: 10,
+                projectileSize: 3,
+                color: '#fff'
+            },
+            shotgun: {
+                name: 'Shotgun',
+                damage: 8,
+                fireRate: 800,
+                spread: 0.3,
+                projectileCount: 5,
+                projectileSpeed: 8,
+                projectileSize: 2,
+                color: '#ff0'
+            },
+            laser: {
+                name: 'Laser',
+                damage: 25,
+                fireRate: 500,
+                spread: 0,
+                projectileSpeed: 15,
+                projectileSize: 4,
+                color: '#f0f'
+            },
+            missile: {
+                name: 'Missile',
+                damage: 50,
+                fireRate: 1000,
+                spread: 0.05,
+                projectileSpeed: 6,
+                projectileSize: 6,
+                color: '#f00',
+                homing: true
+            }
+        };
+        return weapons[type] || weapons.default;
+    }
+
     setupEventListeners() {
         window.addEventListener('keydown', (e) => {
             this.keys[e.key.toLowerCase()] = true;
@@ -81,7 +151,139 @@ class GameEngine {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
     }
+
+    createParticle(x, y, color, speed, life, size) {
+        return {
+            x, y,
+            color,
+            speed: speed || { x: (Math.random() - 0.5) * 5, y: (Math.random() - 0.5) * 5 },
+            life: life || 1000,
+            maxLife: life || 1000,
+            size: size || 2
+        };
+    }
+
+    createExplosion(x, y, color) {
+        for (let i = 0; i < 20; i++) {
+            this.particles.push(this.createParticle(x, y, color));
+        }
+    }
+
+    updateParticles(deltaTime) {
+        this.particles = this.particles.filter(particle => {
+            particle.life -= deltaTime;
+            if (particle.life <= 0) return false;
+
+            particle.x += particle.speed.x;
+            particle.y += particle.speed.y;
+            particle.size *= 0.99;
+
+            return true;
+        });
+    }
+
+    drawParticles() {
+        this.particles.forEach(particle => {
+            this.ctx.fillStyle = particle.color;
+            this.ctx.globalAlpha = particle.life / particle.maxLife;
+            this.ctx.beginPath();
+            this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
+        this.ctx.globalAlpha = 1;
+    }
     
+    createEnemy(type) {
+        const enemies = {
+            default: {
+                health: 30,
+                speed: 2,
+                size: 20,
+                color: '#f00',
+                points: 100,
+                pattern: 'chase'
+            },
+            fast: {
+                health: 15,
+                speed: 4,
+                size: 15,
+                color: '#ff0',
+                points: 150,
+                pattern: 'zigzag'
+            },
+            tank: {
+                health: 100,
+                speed: 1,
+                size: 30,
+                color: '#0ff',
+                points: 300,
+                pattern: 'straight'
+            },
+            boss: {
+                health: 500,
+                speed: 1.5,
+                size: 50,
+                color: '#f0f',
+                points: 1000,
+                pattern: 'complex',
+                isBoss: true
+            }
+        };
+        return enemies[type] || enemies.default;
+    }
+
+    createPowerup(type, x, y) {
+        const powerups = {
+            health: {
+                color: '#0f0',
+                size: 15,
+                effect: (player) => {
+                    player.health = Math.min(player.health + 30, 100);
+                    this.createFloatingText('+30 HP', x, y, '#0f0');
+                }
+            },
+            shield: {
+                color: '#00f',
+                size: 15,
+                effect: (player) => {
+                    player.shield = 50;
+                    this.createFloatingText('Shield Up!', x, y, '#00f');
+                }
+            },
+            speed: {
+                color: '#ff0',
+                size: 15,
+                effect: (player) => {
+                    player.speedBoost = 1.5;
+                    setTimeout(() => player.speedBoost = 1, 5000);
+                    this.createFloatingText('Speed Up!', x, y, '#ff0');
+                }
+            },
+            weapon: {
+                color: '#f0f',
+                size: 15,
+                effect: (player) => {
+                    const weapons = ['shotgun', 'laser', 'missile'];
+                    player.weapon = this.createWeapon(weapons[Math.floor(Math.random() * weapons.length)]);
+                    this.createFloatingText(player.weapon.name + '!', x, y, '#f0f');
+                }
+            }
+        };
+        return powerups[type] || powerups.health;
+    }
+
+    createFloatingText(text, x, y, color) {
+        this.particles.push({
+            text,
+            x,
+            y,
+            color,
+            life: 1000,
+            maxLife: 1000,
+            speed: { x: 0, y: -1 }
+        });
+    }
+
     start() {
         if (!this.isRunning) {
             this.isRunning = true;
@@ -616,15 +818,103 @@ class GameEngine {
         }
     }
     
+    drawHUD() {
+        // Update score and wave display
+        document.getElementById('score').textContent = this.score;
+        document.getElementById('wave').textContent = `Wave ${this.wave}`;
+        
+        // Draw combo counter if active
+        if (this.combo > 1) {
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = '24px "Press Start 2P"';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(`${this.combo}x COMBO!`, this.canvas.width / 2, 50);
+        }
+        
+        // Update health bar and shield
+        if (this.player) {
+            const healthBar = document.getElementById('health-bar');
+            healthBar.style.width = `${this.player.health}%`;
+            
+            if (this.player.shield > 0) {
+                const shieldWidth = (this.player.shield / 50) * 100;
+                healthBar.style.boxShadow = `0 0 10px #00f, 0 0 20px #00f`;
+                healthBar.style.border = '2px solid #00f';
+            } else {
+                healthBar.style.boxShadow = 'none';
+                healthBar.style.border = 'none';
+            }
+        }
+        
+        // Draw current weapon
+        if (this.player && this.player.weapon) {
+            this.ctx.fillStyle = this.player.weapon.color;
+            this.ctx.font = '16px "Press Start 2P"';
+            this.ctx.textAlign = 'right';
+            this.ctx.fillText(this.player.weapon.name, this.canvas.width - 20, this.canvas.height - 20);
+        }
+        
+        // Draw achievement notifications
+        this.drawAchievements();
+    }
+    
     gameLoop() {
         if (!this.isRunning) return;
         
         const currentTime = performance.now();
         this.deltaTime = currentTime - this.lastTime;
         this.lastTime = currentTime;
+        this.gameTime += this.deltaTime;
         
+        // Update game state
+        this.updateParticles(this.deltaTime);
+        this.updatePowerups();
+        this.updateBackground();
         this.update();
-        this.render();
+        
+        // Check combo timeout
+        if (this.combo > 0 && currentTime - this.lastKillTime > this.comboTimeout) {
+            this.combo = 0;
+        }
+        
+        // Update wave system
+        if (!this.betweenWaves) {
+            if (this.enemiesSpawned < this.enemiesPerWave && 
+                currentTime - this.lastSpawnTime > this.spawnRate) {
+                this.spawnEnemy();
+                this.lastSpawnTime = currentTime;
+            }
+            
+            if (this.enemiesDefeated >= this.enemiesPerWave) {
+                this.betweenWaves = true;
+                this.waveStartTime = currentTime;
+                this.wave++;
+                this.difficulty = 1 + (this.wave - 1) * 0.2;
+                this.enemiesPerWave = Math.floor(5 + this.wave * 2);
+                this.spawnRate = Math.max(500, 3000 - this.wave * 200);
+                this.enemiesSpawned = 0;
+                this.enemiesDefeated = 0;
+                
+                // Spawn boss every 5 waves
+                if (this.wave % 5 === 0) {
+                    this.enemiesPerWave = 1;
+                    this.spawnBoss = true;
+                }
+            }
+        } else if (currentTime - this.waveStartTime > this.waveDelay) {
+            this.betweenWaves = false;
+        }
+        
+        // Draw everything
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.drawBackground();
+        this.drawParticles();
+        this.drawPowerups();
+        this.draw();
+        this.drawHUD();
+        
+        // Check achievements
+        this.checkAchievements();
         
         requestAnimationFrame(() => this.gameLoop());
     }
