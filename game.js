@@ -348,7 +348,7 @@ window.addEventListener('load', () => {
 
     // 重新開始按鈕事件
     restartButton.addEventListener('click', () => {
-        window.location.reload();
+        game.restart();
     });
 });
 

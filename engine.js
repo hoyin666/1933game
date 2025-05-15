@@ -330,6 +330,50 @@ window.GameEngine = class GameEngine {
         requestAnimationFrame(() => this.gameLoop());
     }
     
+    start() {
+        if (!this.isRunning) {
+            this.isRunning = true;
+            this.lastTime = performance.now();
+            this.gameLoop();
+            document.getElementById('hud').classList.remove('hidden');
+            document.getElementById('start-screen').classList.add('hidden');
+        }
+    }
+
+    stop() {
+        this.isRunning = false;
+    }
+
+    restart() {
+        // Reset game state
+        this.entities = [];
+        this.particles = [];
+        this.powerups = [];
+        this.score = 0;
+        this.combo = 0;
+        this.wave = 1;
+        this.difficulty = 1;
+        this.lastSpawnTime = 0;
+        this.enemiesSpawned = 0;
+        this.enemiesDefeated = 0;
+        this.betweenWaves = false;
+
+        // Reset player
+        if (this.player) {
+            this.player.x = this.canvas.width / 2;
+            this.player.y = this.canvas.height / 2;
+            this.player.rotation = 0;
+            this.player.health = 150;
+            this.player.shield = 50;
+        }
+
+        // Hide game over screen
+        document.getElementById('game-over').classList.add('hidden');
+
+        // Start game
+        this.start();
+    }
+
     gameOver() {
         this.stop();
         
