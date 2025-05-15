@@ -105,13 +105,35 @@ class GameEngine {
     }
 
     setupEventListeners() {
+        // 防止默認的按鍵行為
         window.addEventListener('keydown', (e) => {
-            this.keys[e.key.toLowerCase()] = true;
-            if(e.key === ' ' && this.isRunning) e.preventDefault();
+            const key = e.key.toLowerCase();
+            // 處理方向鍵
+            if (key === 'arrowup') this.keys['w'] = true;
+            else if (key === 'arrowdown') this.keys['s'] = true;
+            else if (key === 'arrowleft') this.keys['a'] = true;
+            else if (key === 'arrowright') this.keys['d'] = true;
+            else this.keys[key] = true;
+
+            // 防止空格滾動頁面
+            if ((key === ' ' || 
+                key === 'arrowup' || 
+                key === 'arrowdown' || 
+                key === 'w' || 
+                key === 's') && 
+                this.isRunning) {
+                e.preventDefault();
+            }
         });
         
         window.addEventListener('keyup', (e) => {
-            this.keys[e.key.toLowerCase()] = false;
+            const key = e.key.toLowerCase();
+            // 處理方向鍵
+            if (key === 'arrowup') this.keys['w'] = false;
+            else if (key === 'arrowdown') this.keys['s'] = false;
+            else if (key === 'arrowleft') this.keys['a'] = false;
+            else if (key === 'arrowright') this.keys['d'] = false;
+            else this.keys[key] = false;
         });
         
         window.addEventListener('resize', () => this.resizeCanvas());
