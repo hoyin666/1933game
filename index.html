@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>1933 Fighter Plane Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
 </head>
 <body class="bg-gray-900 text-white overflow-hidden h-screen w-screen m-0 p-0">
     <div id="game-container" class="relative h-full w-full overflow-hidden">
@@ -16,7 +16,9 @@
         <!-- Start screen -->
         <div id="start-screen" class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black bg-opacity-80">
             <h1 class="text-4xl md:text-6xl font-geist-mono mb-6 text-center">1933 FIGHTER</h1>
-            <p class="text-xl md:text-2xl mb-10 text-center max-w-md px-4">Take to the skies in your vintage aircraft and battle enemy planes!</p>
+            <p class="text-xl md:text-2xl mb-10 text-center max-w-md px-4">
+                Take to the skies in your vintage aircraft and battle enemy planes!
+            </p>
             <button id="start-button" class="px-8 py-4 bg-red-600 hover:bg-red-700 text-white text-lg md:text-xl rounded-lg transition-all transform hover:scale-105">
                 START MISSION
             </button>
@@ -80,10 +82,29 @@
     <script src="engine.js"></script>
     <script src="game.js"></script>
     <script>
-        window.addEventListener("wheel", (e)=> {
-            const isPinching = e.ctrlKey
-            if(isPinching) e.preventDefault()
-        }, { passive: false })
+    window.addEventListener("wheel", (e) => {
+        const isPinching = e.ctrlKey;
+        if (isPinching) e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const game = new GameEngine('game-canvas');
+
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+
+        startButton.addEventListener('click', () => {
+            startScreen.classList.add('hidden');
+            game.restart();
+        });
+
+        restartButton.addEventListener('click', () => {
+            gameOverScreen.classList.add('hidden');
+            game.restart();
+        });
+    });
     </script>
 </body>
 </html>
