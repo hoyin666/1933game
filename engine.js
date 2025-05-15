@@ -220,6 +220,8 @@ class GameEngine {
             this.ctx.fill();
         });
         this.ctx.globalAlpha = 1;
+    }
+    
     createEnemy(type) {
         const enemies = {
             default: {
