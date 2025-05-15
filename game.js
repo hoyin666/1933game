@@ -9,36 +9,43 @@ document.addEventListener('DOMContentLoaded', () => {
     game.player = {
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,
-        speed: 5,
-        speedBoost: 1,
+        speed: 4,           // 降低基礎速度
+        speedBoost: 1.2,    // 增加加速效果
         rotation: 0,
-        size: 20,
-        health: 100,
-        shield: 0,
+        size: 25,          // 增大玩家飛機大小
+        health: 150,       // 增加生命值
+        shield: 50,        // 開始就有護盾
         weapon: game.createWeapon('default'),
-        lastShot: 0
+        lastShot: 0,
+        autoFire: true     // 自動射擊
     };
 
     // 遊戲更新邏輯
     game.update = function() {
         // 玩家移動
-        if (this.keys['w'] || this.touchControls.up) {
-            this.player.x += Math.cos(this.player.rotation) * this.player.speed * this.player.speedBoost;
-            this.player.y += Math.sin(this.player.rotation) * this.player.speed * this.player.speedBoost;
-        }
+        // 永遠向前移動，但可以減速
+        let speedMultiplier = this.player.speedBoost;
         if (this.keys['s'] || this.touchControls.down) {
-            this.player.x -= Math.cos(this.player.rotation) * this.player.speed * 0.5;
-            this.player.y -= Math.sin(this.player.rotation) * this.player.speed * 0.5;
+            speedMultiplier *= 0.5;  // 按S減速
         }
+        if (this.keys['w'] || this.touchControls.up) {
+            speedMultiplier *= 1.5;  // 按W加速
+        }
+        
+        // 基礎前進速度
+        this.player.x += Math.cos(this.player.rotation) * this.player.speed * speedMultiplier;
+        this.player.y += Math.sin(this.player.rotation) * this.player.speed * speedMultiplier;
+        
+        // 增加轉向速度
         if (this.keys['a'] || this.touchControls.left) {
-            this.player.rotation -= 0.05;
+            this.player.rotation -= 0.08;
         }
         if (this.keys['d'] || this.touchControls.right) {
-            this.player.rotation += 0.05;
+            this.player.rotation += 0.08;
         }
 
-        // 射擊
-        if ((this.keys[' '] || this.touchControls.fire) && 
+        // 自動射擊
+        if ((this.player.autoFire || this.keys[' '] || this.touchControls.fire) && 
             performance.now() - this.player.lastShot > this.player.weapon.fireRate) {
             this.player.lastShot = performance.now();
             
