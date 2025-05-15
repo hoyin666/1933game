@@ -3,8 +3,8 @@ window.addEventListener('load', () => {
         console.error('GameEngine not loaded');
         return;
     }
-    window.game = new GameEngine('game-canvas');
-    const game = window.game;
+    window.gameInstance = new GameEngine('game-canvas');
+    const game = window.gameInstance; // 局部變量，讓下面代碼更容易閱讀
     const startScreen = document.getElementById('start-screen');
     const gameOverScreen = document.getElementById('game-over');
     const startButton = document.getElementById('start-button');
@@ -343,13 +343,12 @@ window.addEventListener('load', () => {
 
     // 開始按鈕事件
     startButton.addEventListener('click', () => {
-        startScreen.classList.add('hidden');
-        game.start();
+        startGame();
     });
 
     // 重新開始按鈕事件
     restartButton.addEventListener('click', () => {
-        game.restart();
+        restartGame();
     });
 });
 

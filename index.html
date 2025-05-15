@@ -8,6 +8,50 @@
   <link rel="stylesheet" href="./style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  // 創建全局變量，使所有函數可以訪問
+  window.gameInstance = null;
+  
+  function startGame() {
+    if (!window.gameInstance) return;
+    window.gameInstance.isRunning = true;
+    window.gameInstance.lastTime = performance.now();
+    window.gameInstance.gameLoop();
+    document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('start-screen').classList.add('hidden');
+  }
+  
+  function restartGame() {
+    if (!window.gameInstance) return;
+    // 重設遊戲狀態
+    window.gameInstance.entities = [];
+    window.gameInstance.particles = [];
+    window.gameInstance.powerups = [];
+    window.gameInstance.score = 0;
+    window.gameInstance.combo = 0;
+    window.gameInstance.wave = 1;
+    window.gameInstance.difficulty = 1;
+    window.gameInstance.lastSpawnTime = 0;
+    window.gameInstance.enemiesSpawned = 0;
+    window.gameInstance.enemiesDefeated = 0;
+    window.gameInstance.betweenWaves = false;
+
+    // 重設玩家
+    if (window.gameInstance.player) {
+      window.gameInstance.player.x = window.gameInstance.canvas.width / 2;
+      window.gameInstance.player.y = window.gameInstance.canvas.height / 2;
+      window.gameInstance.player.rotation = 0;
+      window.gameInstance.player.health = 150;
+      window.gameInstance.player.shield = 50;
+    }
+
+    // 隱藏遊戲結束畫面
+    document.getElementById('game-over').classList.add('hidden');
+
+    // 啟動遊戲
+    startGame();
+  }
+  </script>
   <script src="./engine.js"></script>
   <script src="./game.js"></script>
 </head>
