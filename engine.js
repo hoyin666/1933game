@@ -315,12 +315,42 @@ class GameEngine {
 
     start() {
         if (!this.isRunning) {
+            // 重置遊戲狀態
+            this.entities = [];
+            this.particles = [];
+            this.powerups = [];
+            this.score = 0;
+            this.combo = 0;
+            this.wave = 1;
+            this.difficulty = 1;
+            this.enemiesSpawned = 0;
+            this.enemiesDefeated = 0;
+            this.betweenWaves = false;
+            
+            // 重置玩家狀態
+            if (this.player) {
+                this.player.x = window.innerWidth / 2;
+                this.player.y = window.innerHeight / 2;
+                this.player.rotation = 0;
+                this.player.health = 100;
+                this.player.shield = 0;
+                this.player.speedBoost = 1;
+                this.player.weapon = this.createWeapon('default');
+            }
+            
+            // 開始遊戲循環
             this.isRunning = true;
             this.lastTime = performance.now();
             this.gameLoop();
             
-            // Show HUD
+            // 顯示 HUD
             document.getElementById('hud').classList.remove('hidden');
+            
+            // 更新顯示
+            document.getElementById('score').textContent = '0';
+            document.getElementById('wave').textContent = 'Wave 1';
+            document.getElementById('high-score').textContent = 'High: ' + 
+                Math.max(...this.highScores, 0);
         }
     }
     
