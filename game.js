@@ -3,7 +3,8 @@ window.addEventListener('load', () => {
         console.error('GameEngine not loaded');
         return;
     }
-    const game = new GameEngine('game-canvas');
+    window.game = new GameEngine('game-canvas');
+    const game = window.game;
     const startScreen = document.getElementById('start-screen');
     const gameOverScreen = document.getElementById('game-over');
     const startButton = document.getElementById('start-button');

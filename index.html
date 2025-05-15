@@ -121,25 +121,6 @@
     window.addEventListener("wheel", (e) => {
       if (e.ctrlKey) e.preventDefault();
     }, { passive: false });
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const game = new GameEngine('game-canvas');
-
-      const startScreen = document.getElementById('start-screen');
-      const gameOverScreen = document.getElementById('game-over');
-      const startButton = document.getElementById('start-button');
-      const restartButton = document.getElementById('restart-button');
-
-      startButton.addEventListener('click', () => {
-        startScreen.classList.add('hidden');
-        game.restart();
-      });
-
-      restartButton.addEventListener('click', () => {
-        gameOverScreen.classList.add('hidden');
-        game.restart();
-      });
-    });
   </script>
 </body>
 </html>
