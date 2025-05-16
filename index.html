@@ -5,55 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>1933 Fighter Plane Game</title>
   <!-- 建議開發時保留 CDN，生產環境改用 Tailwind CLI 安裝 -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="./style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-  // 創建全局變量，使所有函數可以訪問
-  window.gameInstance = null;
-  
-  function startGame() {
-    if (!window.gameInstance) return;
-    window.gameInstance.isRunning = true;
-    window.gameInstance.lastTime = performance.now();
-    window.gameInstance.gameLoop();
-    document.getElementById('hud').classList.remove('hidden');
-    document.getElementById('start-screen').classList.add('hidden');
-  }
-  
-  function restartGame() {
-    if (!window.gameInstance) return;
-    // 重設遊戲狀態
-    window.gameInstance.entities = [];
-    window.gameInstance.particles = [];
-    window.gameInstance.powerups = [];
-    window.gameInstance.score = 0;
-    window.gameInstance.combo = 0;
-    window.gameInstance.wave = 1;
-    window.gameInstance.difficulty = 1;
-    window.gameInstance.lastSpawnTime = 0;
-    window.gameInstance.enemiesSpawned = 0;
-    window.gameInstance.enemiesDefeated = 0;
-    window.gameInstance.betweenWaves = false;
-
-    // 重設玩家
-    if (window.gameInstance.player) {
-      window.gameInstance.player.x = window.gameInstance.canvas.width / 2;
-      window.gameInstance.player.y = window.gameInstance.canvas.height / 2;
-      window.gameInstance.player.rotation = 0;
-      window.gameInstance.player.health = 150;
-      window.gameInstance.player.shield = 50;
-    }
-
-    // 隱藏遊戲結束畫面
-    document.getElementById('game-over').classList.add('hidden');
-
-    // 啟動遊戲
-    startGame();
-  }
-  </script>
-  <script src="./engine.js"></script>
-  <script src="./game.js"></script>
 </head>
 <body class="bg-gray-900 text-white overflow-hidden h-screen w-screen m-0 p-0">
   <div id="game-container" class="relative h-full w-full overflow-hidden">
@@ -100,7 +54,7 @@
           </svg>
           <span id="score">0</span>
         </div>
-        <div class="flex items-center mb-2">
+        <div class="flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2">
             <path d="M12 8V12L15 15" />
@@ -108,20 +62,11 @@
           </svg>
           <span id="wave">Wave 1</span>
         </div>
-        <div class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2">
-            <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" />
-            <path d="M15 2H9a1 1 0 00-1 1v2a1 1 0 001 1h6a1 1 0 001-1V3a1 1 0 00-1-1z" />
-          </svg>
-          <div id="high-score">High: 0</div>
-        </div>
       </div>
       <div>
-        <div id="health-container" class="h-4 w-40 bg-gray-700 rounded-full overflow-hidden mb-2">
+        <div id="health-container" class="h-4 w-40 bg-gray-700 rounded-full overflow-hidden">
           <div id="health-bar" class="h-full bg-red-600 transition-all duration-300" style="width: 100%"></div>
         </div>
-        <div id="weapon-info" class="text-right text-sm opacity-75">Machine Gun</div>
       </div>
     </div>
 
@@ -130,24 +75,7 @@
          class="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black bg-opacity-80 hidden">
       <h2 class="text-4xl md:text-6xl font-geist-mono mb-6 text-red-600">MISSION FAILED</h2>
       <p class="text-xl mb-4">Final Score: <span id="final-score">0</span></p>
-      <p class="text-xl mb-4">Wave Reached: <span id="final-wave">0</span></p>
-      
-      <!-- High Scores -->
-      <div class="mb-8">
-        <h3 class="text-xl mb-2 text-center">High Scores</h3>
-        <div id="high-scores" class="flex flex-col gap-1 text-center">
-          <!-- High scores will be inserted here -->
-        </div>
-      </div>
-      
-      <!-- Achievements -->
-      <div class="mb-8">
-        <h3 class="text-xl mb-2 text-center">Achievements</h3>
-        <div id="achievements" class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm opacity-75">
-          <!-- Achievements will be inserted here -->
-        </div>
-      </div>
-      
+      <p class="text-xl mb-10">Wave Reached: <span id="final-wave">0</span></p>
       <button id="restart-button"
               class="px-8 py-4 bg-red-600 hover:bg-red-700 text-white text-lg md:text-xl rounded-lg transition-all transform hover:scale-105">
         TRY AGAIN
@@ -159,19 +87,30 @@
     Built with <a href="https://flowith.net" target="_blank" class="hover:text-white transition-colors">Flowith Oracle</a>.
   </footer>
 
-  <!-- 加载游戏脚本 -->
   <script src="./engine.js"></script>
   <script src="./game.js"></script>
   <script>
-    // 确保 DOM 完全加载
+    window.addEventListener("wheel", (e) => {
+      if (e.ctrlKey) e.preventDefault();
+    }, { passive: false });
+
     document.addEventListener('DOMContentLoaded', () => {
-      // 初始化游戏实例
-      window.gameInstance = new GameEngine();
-      
-      // 添加鼠标滚轮事件监听
-      window.addEventListener("wheel", (e) => {
-        if (e.ctrlKey) e.preventDefault();
-      }, { passive: false });
+      const game = new GameEngine('game-canvas');
+
+      const startScreen = document.getElementById('start-screen');
+      const gameOverScreen = document.getElementById('game-over');
+      const startButton = document.getElementById('start-button');
+      const restartButton = document.getElementById('restart-button');
+
+      startButton.addEventListener('click', () => {
+        startScreen.classList.add('hidden');
+        game.restart();
+      });
+
+      restartButton.addEventListener('click', () => {
+        gameOverScreen.classList.add('hidden');
+        game.restart();
+      });
     });
   </script>
 </body>
