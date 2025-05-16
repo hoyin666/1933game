@@ -159,12 +159,17 @@
     Built with <a href="https://flowith.net" target="_blank" class="hover:text-white transition-colors">Flowith Oracle</a>.
   </footer>
 
-  <script src="./engine.js"></script>
-  <script src="./game.js"></script>
   <script>
-    window.addEventListener("wheel", (e) => {
-      if (e.ctrlKey) e.preventDefault();
-    }, { passive: false });
+    // 确保 DOM 完全加载
+    document.addEventListener('DOMContentLoaded', () => {
+      // 初始化游戏实例
+      window.gameInstance = new GameEngine();
+      
+      // 添加鼠标滚轮事件监听
+      window.addEventListener("wheel", (e) => {
+        if (e.ctrlKey) e.preventDefault();
+      }, { passive: false });
+    });
   </script>
 </body>
 </html>

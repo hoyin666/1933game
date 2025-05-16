@@ -222,351 +222,6 @@ window.GameEngine = class GameEngine {
         this.ctx.globalAlpha = 1;
     }
     
-    updateBackground() {
-        // 背景更新邏輯（如果需要移動的背景）
-        // 目前保持為空函數
-    }
-    
-    drawBackground() {
-        // 繪製簡單的星空背景
-        this.ctx.fillStyle = '#000';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    }
-    
-    updatePowerups() {
-        // 道具更新邏輯
-        // 目前保持為空函數
-    }
-    
-    drawPowerups() {
-        // 繪製道具
-        // 目前保持為空函數
-    }
-    
-    spawnEnemy() {
-        // 隨機決定敵人類型
-        let type = 'default';
-        const rand = Math.random();
-        
-        if (this.wave >= 5 && this.spawnBoss) {
-            type = 'boss';
-            this.spawnBoss = false;
-        } else if (rand < 0.15 * this.difficulty) {
-            type = 'fast';
-        } else if (rand < 0.25 * this.difficulty) {
-            type = 'tank';
-        }
-        
-        // 創建敵人并添加到實體列表
-        const enemy = this.createEnemy(type);
-        this.entities.push(enemy);
-        this.enemiesSpawned++;
-    }
-    
-    update() {
-        // 更新玩家
-        if (this.player && this.player.health > 0) {
-            // 自動向前移動
-            const speed = this.player.speed * (this.keys['w'] ? this.player.speedBoost : (this.keys['s'] ? 0.7 : 1));
-            this.player.x += Math.cos(this.player.rotation) * speed;
-            this.player.y += Math.sin(this.player.rotation) * speed;
-            
-            // 旋轉
-            const rotationSpeed = 0.07; // 增加旋轉速度
-            if (this.keys['a'] || this.keys['ArrowLeft']) {
-                this.player.rotation -= rotationSpeed;
-            }
-            if (this.keys['d'] || this.keys['ArrowRight']) {
-                this.player.rotation += rotationSpeed;
-            }
-            
-            // 自動射擊
-            if (this.player.autoFire) {
-                const currentTime = performance.now();
-                if (currentTime - this.player.lastShot > this.player.weapon.cooldown) {
-                    // 發射子彈
-                    const bulletSpeed = 10;
-                    const bullet = {
-                        x: this.player.x + Math.cos(this.player.rotation) * this.player.size,
-                        y: this.player.y + Math.sin(this.player.rotation) * this.player.size,
-                        speed: {
-                            x: Math.cos(this.player.rotation) * bulletSpeed,
-                            y: Math.sin(this.player.rotation) * bulletSpeed
-                        },
-                        damage: this.player.weapon.damage,
-                        size: 5,
-                        color: this.player.weapon.color,
-                        fromPlayer: true
-                    };
-                    this.entities.push(bullet);
-                    this.player.lastShot = currentTime;
-                }
-            }
-            
-            // 限制玩家不能超出畫面
-            this.player.x = Math.max(this.player.size, Math.min(this.canvas.width - this.player.size, this.player.x));
-            this.player.y = Math.max(this.player.size, Math.min(this.canvas.height - this.player.size, this.player.y));
-        }
-        
-        // 更新所有實體
-        this.entities = this.entities.filter(entity => {
-            // 移動敵人
-            if (entity.type) {
-                // 根據模式移動敵人
-                if (entity.pattern === 'chase' && this.player) {
-                    const angle = Math.atan2(this.player.y - entity.y, this.player.x - entity.x);
-                    entity.rotation = angle;
-                    entity.x += Math.cos(angle) * entity.speed;
-                    entity.y += Math.sin(angle) * entity.speed;
-                } else if (entity.pattern === 'zigzag') {
-                    entity.x += Math.cos(this.gameTime / 500) * 2;
-                    entity.y += entity.speed;
-                } else if (entity.pattern === 'straight') {
-                    entity.y += entity.speed;
-                } else if (entity.pattern === 'boss') {
-                    // Boss移動模式
-                    if (entity.y < 100) {
-                        entity.y += entity.speed;
-                    } else {
-                        entity.x += Math.cos(this.gameTime / 1000) * 3;
-                    }
-                }
-                
-                // 當敵人超出畫面底部時移除
-                if (entity.y > this.canvas.height + entity.size) {
-                    return false;
-                }
-                
-                // 敵人射擊
-                if (this.player && Math.random() < 0.01 * this.difficulty) {
-                    const angle = Math.atan2(this.player.y - entity.y, this.player.x - entity.x);
-                    const bulletSpeed = 5;
-                    const bullet = {
-                        x: entity.x,
-                        y: entity.y,
-                        speed: {
-                            x: Math.cos(angle) * bulletSpeed,
-                            y: Math.sin(angle) * bulletSpeed
-                        },
-                        damage: 10,
-                        size: 5,
-                        color: entity.color,
-                        fromEnemy: true
-                    };
-                    this.entities.push(bullet);
-                }
-            }
-            
-            // 移動子彈
-            if (entity.speed && !entity.type) {
-                entity.x += entity.speed.x;
-                entity.y += entity.speed.y;
-                
-                // 檢查子彈是否超出畫面
-                if (entity.x < 0 || entity.x > this.canvas.width ||
-                    entity.y < 0 || entity.y > this.canvas.height) {
-                    return false;
-                }
-                
-                // 檢查碰撞
-                if (entity.fromPlayer) {
-                    // 玩家子彈與敵人碰撞
-                    for (const enemy of this.entities) {
-                        if (!enemy.type) continue; // 不是敵人則跳過
-                        
-                        const dx = entity.x - enemy.x;
-                        const dy = entity.y - enemy.y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (distance < entity.size + enemy.size) {
-                            // 碰撞，減少敵人生命值
-                            enemy.health -= entity.damage;
-                            
-                            // 創建爆炸特效
-                            this.createExplosion(entity.x, entity.y, entity.color);
-                            
-                            // 如果敵人生命值低於0，移除敵人
-                            if (enemy.health <= 0) {
-                                // 增加分數
-                                this.score += enemy.points * (1 + this.combo * 0.1);
-                                this.combo++;
-                                this.lastKillTime = performance.now();
-                                this.enemiesDefeated++;
-                                
-                                // 創建更大的爆炸
-                                this.createExplosion(enemy.x, enemy.y, enemy.color);
-                                
-                                // 移除敵人
-                                const enemyIndex = this.entities.indexOf(enemy);
-                                if (enemyIndex !== -1) {
-                                    this.entities.splice(enemyIndex, 1);
-                                }
-                            }
-                            
-                            // 移除子彈
-                            return false;
-                        }
-                    }
-                } else if (entity.fromEnemy && this.player) {
-                    // 敵人子彈與玩家碰撞
-                    const dx = entity.x - this.player.x;
-                    const dy = entity.y - this.player.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (distance < entity.size + this.player.size) {
-                        // 碰撞，減少玩家生命值
-                        if (this.player.shield > 0) {
-                            this.player.shield -= entity.damage;
-                            if (this.player.shield < 0) {
-                                this.player.health += this.player.shield;
-                                this.player.shield = 0;
-                            }
-                        } else {
-                            this.player.health -= entity.damage;
-                        }
-                        
-                        // 創建爆炸特效
-                        this.createExplosion(entity.x, entity.y, '#fff');
-                        
-                        // 如果玩家生命值低於0，遊戲結束
-                        if (this.player.health <= 0) {
-                            this.gameOver();
-                        }
-                        
-                        // 移除子彈
-                        return false;
-                    }
-                }
-            }
-            
-            return true;
-        });
-    }
-    
-    draw() {
-        // 繪製玩家
-        if (this.player && this.player.health > 0) {
-            // 繪製玩家飛機
-            this.ctx.save();
-            this.ctx.translate(this.player.x, this.player.y);
-            this.ctx.rotate(this.player.rotation);
-            
-            // 主身
-            this.ctx.fillStyle = '#0af';
-            this.ctx.beginPath();
-            this.ctx.moveTo(this.player.size, 0);
-            this.ctx.lineTo(-this.player.size / 2, -this.player.size / 2);
-            this.ctx.lineTo(-this.player.size / 2, this.player.size / 2);
-            this.ctx.closePath();
-            this.ctx.fill();
-            
-            // 機翼
-            this.ctx.fillStyle = '#08f';
-            this.ctx.beginPath();
-            this.ctx.moveTo(-this.player.size / 2, -this.player.size / 1.2);
-            this.ctx.lineTo(-this.player.size / 1.5, 0);
-            this.ctx.lineTo(-this.player.size / 2, this.player.size / 1.2);
-            this.ctx.closePath();
-            this.ctx.fill();
-            
-            // 如果有護盾，繪製護盾光圈
-            if (this.player.shield > 0) {
-                this.ctx.strokeStyle = '#0ff';
-                this.ctx.lineWidth = 2;
-                this.ctx.beginPath();
-                this.ctx.arc(0, 0, this.player.size + 5, 0, Math.PI * 2);
-                this.ctx.stroke();
-            }
-            
-            this.ctx.restore();
-        }
-        
-        // 繪製所有實體
-        for (const entity of this.entities) {
-            if (entity.type) {
-                // 繪製敵人
-                this.ctx.fillStyle = entity.color;
-                this.ctx.beginPath();
-                this.ctx.arc(entity.x, entity.y, entity.size, 0, Math.PI * 2);
-                this.ctx.fill();
-                
-                // 繪製生命條
-                const healthBarWidth = entity.size * 2;
-                const healthPercent = entity.health / (entity.type === 'boss' ? 300 : entity.type === 'tank' ? 80 : entity.type === 'fast' ? 15 : 20);
-                
-                this.ctx.fillStyle = '#900';
-                this.ctx.fillRect(entity.x - healthBarWidth / 2, entity.y - entity.size - 10, healthBarWidth, 5);
-                
-                this.ctx.fillStyle = '#0f0';
-                this.ctx.fillRect(entity.x - healthBarWidth / 2, entity.y - entity.size - 10, healthBarWidth * healthPercent, 5);
-            } else if (entity.speed) {
-                // 繪製子彈
-                this.ctx.fillStyle = entity.color;
-                this.ctx.beginPath();
-                this.ctx.arc(entity.x, entity.y, entity.size, 0, Math.PI * 2);
-                this.ctx.fill();
-            }
-        }
-    }
-    
-    drawHUD() {
-        // 繪製分數
-        this.ctx.fillStyle = '#fff';
-        this.ctx.font = '20px "Press Start 2P", monospace';
-        this.ctx.textAlign = 'left';
-        this.ctx.fillText(`SCORE: ${Math.floor(this.score)}`, 20, 30);
-        
-        // 繪製生命條
-        if (this.player) {
-            // 更新頁面上的生命值與護盾值
-            document.getElementById('health-value').textContent = this.player.health;
-            document.getElementById('shield-value').textContent = this.player.shield;
-            
-            // 更新生命條與護盾條
-            const healthBar = document.getElementById('health-bar');
-            const shieldBar = document.getElementById('shield-bar');
-            
-            if (healthBar && shieldBar) {
-                healthBar.style.width = `${(this.player.health / 150) * 100}%`;
-                shieldBar.style.width = `${(this.player.shield / 50) * 100}%`;
-            }
-        }
-        
-        // 繪製波數
-        this.ctx.textAlign = 'right';
-        this.ctx.fillText(`WAVE: ${this.wave}`, this.canvas.width - 20, 30);
-        
-        // 繪製連擊
-        if (this.combo > 1) {
-            this.ctx.textAlign = 'center';
-            this.ctx.fillStyle = '#f90';
-            this.ctx.fillText(`COMBO x${this.combo}`, this.canvas.width / 2, 30);
-        }
-        
-        // 繪製波次提示
-        if (this.betweenWaves) {
-            const nextWaveIn = Math.ceil((this.waveDelay - (performance.now() - this.waveStartTime)) / 1000);
-            
-            this.ctx.textAlign = 'center';
-            this.ctx.font = '30px "Press Start 2P", monospace';
-            this.ctx.fillStyle = '#0ff';
-            
-            if (this.wave % 5 === 0) {
-                this.ctx.fillText(`BOSS WAVE ${this.wave}`, this.canvas.width / 2, this.canvas.height / 2 - 50);
-            } else {
-                this.ctx.fillText(`WAVE ${this.wave}`, this.canvas.width / 2, this.canvas.height / 2 - 50);
-            }
-            
-            this.ctx.font = '20px "Press Start 2P", monospace';
-            this.ctx.fillText(`Next wave in ${nextWaveIn}s`, this.canvas.width / 2, this.canvas.height / 2);
-        }
-    }
-    
-    checkAchievements() {
-        // 判斷應做的成就
-        // 目前保持為空函數
-    }
-    
     createEnemy(type) {
         const enemies = {
             default: {
@@ -718,15 +373,103 @@ window.GameEngine = class GameEngine {
         // Start game
         this.start();
     }
+}
 
-    gameOver() {
-        this.stop();
-        
-        // Update final score
-        document.getElementById('final-score').textContent = this.score;
-        document.getElementById('final-wave').textContent = this.wave;
-        
-        // Show game over screen
-        document.getElementById('game-over').classList.remove('hidden');
+// Draw everything
+this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+this.drawBackground();
+this.drawParticles();
+this.drawPowerups();
+this.draw();
+this.drawHUD();
+
+// Check achievements
+this.checkAchievements();
+
+requestAnimationFrame(() => this.gameLoop());
+}
+
+start() {
+if (!this.isRunning) {
+    this.isRunning = true;
+    this.lastTime = performance.now();
+    this.gameLoop();
+    document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('start-screen').classList.add('hidden');
+}
+}
+
+stop() {
+this.isRunning = false;
+}
+
+restart() {
+// Reset game state
+this.entities = [];
+this.particles = [];
+this.powerups = [];
+this.score = 0;
+this.combo = 0;
+this.wave = 1;
+this.difficulty = 1;
+this.lastSpawnTime = 0;
+this.enemiesSpawned = 0;
+this.enemiesDefeated = 0;
+this.betweenWaves = false;
+
+// Reset player
+if (this.player) {
+    this.player.x = this.canvas.width / 2;
+    this.player.y = this.canvas.height / 2;
+    this.player.rotation = 0;
+    this.player.health = 150;
+    this.player.shield = 50;
+}
+
+// Hide game over screen
+document.getElementById('game-over').classList.add('hidden');
+
+// Start game
+this.start();
+}
+
+gameOver() {
+this.stop();
+
+// Update final score
+document.getElementById('final-score').textContent = this.score;
+document.getElementById('final-wave').textContent = this.wave;
+
+    // Show game over screen
+    document.getElementById('game-over').classList.remove('hidden');
+}
+
+drawHUD() {
+    // 确保 HUD 容器存在
+    const hud = document.getElementById('hud');
+    if (!hud) return;
+
+    // 初始化或更新 HUD 元素
+    const scoreElement = document.getElementById('score');
+    const waveElement = document.getElementById('wave');
+    const healthBar = document.getElementById('health-bar');
+    const weaponInfo = document.getElementById('weapon-info');
+    const highScoreElement = document.getElementById('high-score');
+
+    // 检查每个元素是否存在
+    if (scoreElement) {
+        scoreElement.textContent = this.score;
+    }
+    if (waveElement) {
+        waveElement.textContent = `Wave ${this.wave}`;
+    }
+    if (healthBar) {
+        healthBar.style.width = `${(this.player.health / 150) * 100}%`;
+    }
+    if (weaponInfo) {
+        weaponInfo.textContent = this.player.weapon.name;
+    }
+    if (highScoreElement) {
+        highScoreElement.textContent = `High: ${localStorage.getItem('highScore') || 0}`;
     }
 }
