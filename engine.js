@@ -1,3 +1,10 @@
+class GameEngine {
+    constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.ctx = this.canvas.getContext('2d');
+        this.particles = [];
+        this.isRunning = false;
+        this.lastTime = 0;
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
     }
@@ -18,7 +25,6 @@
             this.particles.push(this.createParticle(x, y, color));
         }
     }
-
     updateParticles(deltaTime) {
         this.particles = this.particles.filter(particle => {
             particle.life -= deltaTime;
