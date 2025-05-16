@@ -3,10 +3,43 @@ class GameEngine {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
         this.particles = [];
+        this.entities = [];
+        this.powerups = [];
         this.isRunning = false;
         this.lastTime = 0;
+        this.gameTime = 0;
+        this.deltaTime = 0;
+        this.combo = 0;
+        this.lastKillTime = 0;
+        this.comboTimeout = 2000;
+        this.score = 0;
+        this.wave = 1;
+        this.difficulty = 1;
+        this.lastSpawnTime = 0;
+        this.enemiesSpawned = 0;
+        this.enemiesDefeated = 0;
+        this.betweenWaves = false;
+        this.waveStartTime = 0;
+        this.waveDelay = 3000;
+        this.enemiesPerWave = 4;
+        this.spawnRate = 2000;
+        this.spawnBoss = false;
+        this.backgroundStars = [];
+        this.player = null;
+
+        // 初始化畫布大小
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+
+        // 初始化背景星星
+        for (let i = 0; i < 100; i++) {
+            this.backgroundStars.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                size: Math.random() * 2 + 1,
+                speed: Math.random() * 0.5 + 0.5
+            });
+        }
     }
 
     createParticle(x, y, color, speed, life, size) {
@@ -25,6 +58,7 @@ class GameEngine {
             this.particles.push(this.createParticle(x, y, color));
         }
     }
+
     updateParticles(deltaTime) {
         this.particles = this.particles.filter(particle => {
             particle.life -= deltaTime;
